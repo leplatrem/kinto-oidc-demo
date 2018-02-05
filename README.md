@@ -13,7 +13,7 @@
 kinto.includes = kinto.plugins.default_bucket
                  kinto.plugins.openid
 
-multiauth.policies = fxa oidc
+multiauth.policies = oidc
 multiauth.policy.oidc.use = kinto.plugins.openid.OpenIDConnectPolicy
 
 oidc.issuer_url = https://accounts.google.com

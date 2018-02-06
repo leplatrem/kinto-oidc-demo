@@ -39,34 +39,37 @@ class OpenIDClient {
   }
 
   async authorize() {
-    const {
-      authorization_endpoint: authEndpoint,
-      client_id: clientID,
-    } = this.capabilities
-
-    // Obtain state from Kinto server.
-    const resp = await fetch(`${KINTO_URL}/openid/state?callback=${encodeURIComponent(CALLBACK_URL)}`);
-    const {state} = await resp.json();
-
-    // Redirect to login form.
-    const redirectURI = `${KINTO_URL}/openid/token?`;
-    const uri = `${authEndpoint}?client_id=${clientID}&response_type=code&scope=${SCOPES}&redirect_uri=${redirectURI}&state=${state}`;
-    window.location = uri;
+    const {auth_uri: authUri} = this.capabilities;
+    // Start OAuth login dance.
+    window.location = `${KINTO_URL}${authUri}?callback=${encodeURIComponent(CALLBACK_URL)}&scope=${SCOPES}`;
   }
 
   async userInfo(accessToken) {
     const {userinfo_endpoint: userinfoEndpoint} = this.capabilities;
-    console.log(userinfoEndpoint);
     const resp = await fetch(userinfoEndpoint, {headers: {"Authorization": `Bearer ${accessToken}`}});
     return await resp.json();
   }
 
   parseHash() {
-    const hash = window.location.hash.slice(1);
-    const tokenString = hash.replace('tokens=', '');  // XXXX: boooh.
-    const tokens = decodeURIComponent(tokenString);
-    if (tokens.length > 1) {
-      return JSON.parse(tokens);
+    const hash = decodeURIComponent(window.location.hash);
+    // Parse tokens from location bar.
+    const tokensExtract = /tokens=([.\s\S]*)/m.exec(hash);
+    if (tokensExtract) {
+      const tokens = tokensExtract[1];
+      const parsed = JSON.parse(tokens);
+      // If parsed info is not access token, raise.
+      if (!parsed.access_token) {
+        throw new Error(`Authentication error: ${tokens}`);
+      }
+
+      const jwtPayload = JSON.parse(window.atob(parsed.id_token.split('.')[1]));
+      return {
+        expiresIn: parsed.expires_in,
+        accessToken: parsed.access_token,
+        tokenType: parsed.token_type,
+        idToken: parsed.id_token,
+        idTokenPayload: jwtPayload,
+      };
     }
     return {}
   }
@@ -83,11 +86,11 @@ function handleAuthentication(webAuth0) {
     // Authentication returned an error.
     showError(err);
   }
+  window.location.hash = '';
 
-  if (authResult && authResult.access_token && authResult.id_token) {
+  if (authResult && authResult.accessToken && authResult.idToken) {
     // Token was passed in location hash by authentication portal.
     authenticated = true;
-    window.location.hash = '';
     setSession(authResult);
   } else {
     // Look into session storage for session.
@@ -109,10 +112,11 @@ function handleAuthentication(webAuth0) {
 
     initRecordForm()
 
-    const {access_token: accessToken} = authResult;
+    const {accessToken, tokenType} = authResult;
 
     // XXXX buurk
-    kintoClient._headers["Authorization"] = `Bearer ${accessToken}`
+    kintoClient.serverInfo = null;
+    kintoClient._headers["Authorization"] = `${tokenType} ${accessToken}`;
 
     Promise.all([
       showUserInfo(accessToken),
@@ -145,7 +149,7 @@ function displayButtons(authenticated) {
 function setSession(authResult) {
   // Set the time that the access token will expire at
   const expiresAt = JSON.stringify(
-    authResult.expires_in * 1000 + new Date().getTime()
+    authResult.expiresIn * 1000 + new Date().getTime()
   );
   sessionStorage.setItem('session', JSON.stringify(authResult));
   sessionStorage.setItem('expires_at', expiresAt);
@@ -183,8 +187,10 @@ function initRecordForm() {
   newRecordForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const formData = new FormData(newRecordForm);
-    const data = JSON.parse(formData.get('data'));
-    await kintoClient.bucket("default").createCollection(formData.get('name'), {data});
+    const city = formData.get('city');
+    await kintoClient.bucket("default")
+                     .collection("oidc-demo")
+                     .createRecord({name: formData.get('name'), city});
     // Empty form once submitted.
     newRecordForm.reset()
     // Refresh list.
@@ -196,18 +202,20 @@ async function showAPIRecords() {
   const apiRecordsDiv = document.getElementById('api-records');
   apiRecordsDiv.innerHTML = '';
 
-  const {data} = await kintoClient.bucket("default").listCollections();
+  const {data} = await kintoClient.bucket("default")
+                                  .collection("oidc-demo")
+                                  .listRecords();
   if (data.length == 0) {
     apiRecordsDiv.innerText = 'Empty';
     return
   }
-  for (const obj of data) {
+  for (const {name, city} of data) {
     const _name = document.createElement('h2');
-    _name.innerText = obj.id;
-    const _body = document.createElement('p');
-    _body.className = 'pre';
-    _body.innerText = obj;
+    _name.innerText = name;
+    const _city = document.createElement('p');
+    _city.className = 'pre';
+    _city.innerText = city;
     apiRecordsDiv.appendChild(_name);
-    apiRecordsDiv.appendChild(_body);
+    apiRecordsDiv.appendChild(_city);
   }
 }

@@ -108,16 +108,17 @@ function handleAuthentication(webAuth0) {
   // Interact with API if authenticated.
   if (authenticated) {
     console.log('AuthResult', authResult);
-    showTokenPayload(authResult)
-
-    initRecordForm()
-
     const {accessToken, tokenType} = authResult;
 
-    // XXXX buurk
-    kintoClient.serverInfo = null;
-    kintoClient._headers["Authorization"] = `${tokenType} ${accessToken}`;
+    // Set access token for requests to Kinto.
+    kintoClient.setHeaders({
+      'Authorization': `${tokenType} ${accessToken}`,
+    });
 
+    showTokenPayload(authResult)
+    initRecordForm()
+
+    // Refresh UI with infos.
     Promise.all([
       showUserInfo(accessToken),
       showAPIHello(),

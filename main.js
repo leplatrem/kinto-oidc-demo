@@ -17,7 +17,9 @@ async function main() {
     showError("OpenID not enabled on server.");
     return
   }
-  authClient = new OpenIDClient(openidCaps);
+  // Use the only provider configured.
+  const {providers} = openidCaps;
+  authClient = new OpenIDClient(providers[0]);
 
   // Start authentication process on Login button
   const loginBtn = document.getElementById('login');
@@ -39,9 +41,9 @@ class OpenIDClient {
   }
 
   async authorize() {
-    const {auth_uri: authUri} = this.capabilities;
+    const {auth_path: authPath} = this.capabilities;
     // Start OAuth login dance.
-    window.location = `${KINTO_URL}${authUri}?callback=${encodeURIComponent(CALLBACK_URL)}&scope=${SCOPES}`;
+    window.location = `${KINTO_URL}${authPath}?callback=${encodeURIComponent(CALLBACK_URL)}&scope=${SCOPES}`;
   }
 
   async userInfo(accessToken) {

@@ -9,8 +9,9 @@
   </head>
   <body>
     <h1>Kinto OpenID Connect demo</h1>
-    <button id="login">Login</button>
-    <button id="logout">Logout</button>
+    <div id="login-bar">
+      <button id="logout">Logout</button>
+    </div>
 
     <div id="error" style="display:none"></div>
 
@@ -27,15 +28,10 @@
 
       <div class="tab">
           <input type="radio" id="tab-2" name="tab-group-1" checked>
-          <label for="tab-2">Records</label>
+          <label for="tab-2">Token payload</label>
 
           <div class="content">
-              <form id="api-record-form">
-                <input type="text" name="name" placeholder="Name..." />
-                <input type="text" name="city" placeholder="City..."></textarea>
-                <input type="submit" value="Save"/>
-              </form>
-              <div id="api-records"></div>
+              <div id="token-payload" class="pre"></div>
           </div>
       </div>
 
@@ -52,10 +48,16 @@
 
       <div class="tab">
           <input type="radio" id="tab-4" name="tab-group-1">
-          <label for="tab-4">Token payload</label>
+          <label for="tab-4">Records</label>
 
           <div class="content">
-              <div id="token-payload" class="pre"></div>
+              <form id="api-record-form">
+                <input type="text" name="name" placeholder="Name..." required/>
+                <input type="text" name="city" placeholder="City..." required/>
+                <input type="submit" value="Save"/>
+              </form>
+              <div id="api-records">
+              </div>
           </div>
       </div>
     </div>

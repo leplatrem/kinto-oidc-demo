@@ -10,6 +10,7 @@ async function main() {
   const kintoClient = new KintoClient(KINTO_URL);
   const authClient = new OpenIDClient();
 
+  // Inspect OpenID information from Kinto server.
   const {capabilities: {openid: openidCaps}} = await kintoClient.fetchServerInfo();
   if (!openidCaps) {
     showError("OpenID not enabled on server.");
@@ -171,8 +172,13 @@ function refreshUI(authenticated) {
 
 async function showUserInfo(kintoClient, authClient, provider, accessToken) {
   const profile = await authClient.userInfo(kintoClient, provider, accessToken);
-  document.getElementById('profile-nickname').innerText = profile.name;
-  document.getElementById('profile-picture').setAttribute('src', profile.picture);
+  const {name, picture} = profile;
+  if (name) {
+    document.getElementById('profile-nickname').innerText = name;
+  }
+  if (picture) {
+    document.getElementById('profile-picture').setAttribute('src', picture);
+  }
   document.getElementById('profile-details').innerText = JSON.stringify(profile, null, 2);
 }
 

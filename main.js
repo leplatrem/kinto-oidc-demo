@@ -23,7 +23,7 @@ async function main() {
   for(const provider of providers) {
     const {name} = provider;
     const loginBtn = document.createElement('button');
-    loginBtn.className = 'login';
+    loginBtn.className = `login ${name}`;
     loginBtn.textContent = `Login with ${name[0].toUpperCase() + name.substr(1)}`;
     loginBar.insertBefore(loginBtn, loginBar.firstChild);
     loginBtn.addEventListener('click', () => {

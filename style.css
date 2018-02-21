@@ -10,6 +10,21 @@
   white-space: pre;
 }
 
+button.login {
+  padding-left: 20px;
+  background-repeat: no-repeat;
+  background-size: contain;
+}
+button.login.auth0 {
+  background-image: url("https://cdn.auth0.com/styleguide/components/1.0.8/media/logos/img/favicon.png");
+}
+button.login.google {
+  background-image: url("https://www.google.com/favicon.ico");
+}
+button.login.fxa {
+  background-image: url("https://upload.wikimedia.org/wikipedia/commons/6/67/Firefox_Logo%2C_2017.svg");
+}
+
 /* https://css-tricks.com/functional-css-tabs-revisited/ */
 .tabs {
   position: relative;

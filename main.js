@@ -109,7 +109,7 @@ class OpenIDClient {
         idTokenPayload,
       };
     }
-    return {}
+    return null;
   }
 
   authenticate() {

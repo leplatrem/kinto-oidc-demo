@@ -94,7 +94,7 @@ class OpenIDClient {
     if (hashExtract) {
       const provider = hashExtract[1];
       const tokens = hashExtract[2];
-      const parsed = JSON.parse(tokens);
+      const parsed = JSON.parse(window.atob(tokens));
       // If parsed info is not access token, raise.
       if (!parsed.access_token) {
         throw new Error(`Authentication error: ${tokens}`);
